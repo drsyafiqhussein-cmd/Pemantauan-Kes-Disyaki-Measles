@@ -805,7 +805,7 @@
       headerHTML += `</thead>`;
 
       const summaryBodyRows = [
-        { isHeader: true, title: 'Klasifikasi Kes (Case_Classification)' },
+        { isHeader: true, title: 'Klasifikasi Kes' },
         { id: 'resLabMeasles', label: 'Laboratory Confirmed Measles' },
         { id: 'resClinical', label: 'Clinically Compatible With Measles' },
         { id: 'resEpid', label: 'Epid-Linked Measles' },
@@ -842,8 +842,8 @@
         { id: 'indBloodSample28d', label: '<b>5. Peratus Kes Suspek dengan Pengambilan Sampel Darah &le; 28 Hari Selepas Onset Ruam</b><br><small><b>Sasaran:</b> &ge; 80% daripada jumlah kes suspek (kecuali Epid-Linked Measles)</small>' },
         { id: 'indSampleLab5d', label: '<b>6. Peratus Sampel Dihantar ke Makmal dalam Masa &le; 5 Hari</b><br><small><b>Sasaran:</b> &ge; 80% daripada sampel yang diterima makmal (Beza Diterima - Dikutip &le; 5 hari)</small>' },
         { id: 'indResultReceived4d', label: '<b>7. Peratus Keputusan Sampel Diterima dalam Masa &le; 4 Hari</b><br><small><b>Sasaran:</b> &ge; 80% daripada sampel yang diterima makmal (Beza Dilapor - Diterima &le; 4 hari)</small>' },
-        { id: 'indOutbreakGenotype', label: '<b>8. Peratus Wabak Measles dengan Genotype Data</b><br><small><b>Sasaran:</b> &ge; 80% daripada jumlah kes wabak (Outbreak_Assoc = Y)</small>' },
-        { id: 'indConfirmedSource', label: '<b>9. Peratus Kes Disahkan Measles dengan Punca Jangkitan</b><br><small><b>Sasaran:</b> &ge; 80% daripada jumlah kes lab confirmed measles (_Type tidak kosong)</small>' }
+        { id: 'indOutbreakGenotype', label: '<b>8. Peratus Wabak Measles dengan Genotype Data</b><br><small><b>Sasaran:</b> &ge; 80% daripada jumlah kes wabak</small>' },
+        { id: 'indConfirmedSource', label: '<b>9. Peratus Kes Disahkan Measles dengan Punca Jangkitan</b><br><small><b>Sasaran:</b> &ge; 80% daripada jumlah kes lab confirmed measles</small>' }
       ];
 
       let bodyHTML = `<tbody>`;
