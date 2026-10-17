@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pemantauan Siasatan Kes Disyaki Measles – Malaysia</title>
+
+  <!-- SheetJS for reading Excel/CSV files -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Chart.js for graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 1.5rem;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f7fb;
+      color: #222;
+    }
+
+    /* Top Bar Header Layout */
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1.5rem;
+      background: #ffffff;
+      padding: 1.25rem 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      margin: 0 0 0.35rem 0;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .small-text {
+      font-size: 0.88rem;
+      color: #444;
+      line-height: 1.45;
+    }
+
+    .small-text b {
+      color: #000;
+    }
+
+    /* Upload Box Styling */
+    .upload-box {
+      background: #f8fafc;
+      padding: 0.8rem 1rem;
+      border: 1px dashed #c5c8e0;
+      border-radius: 10px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #eef3ff;
+      color: #33409c;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+
+    input[type="file"] {
+      font-size: 0.85rem;
+      display: block;
+    }
+
+    #statusMessage {
+      margin-top: 0.5rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #2e7d32;
+    }
+
+    /* CONTROLS CARD CONTAINER */
+    .controls-card {
+      background: #ffffff;
+      padding: 1.25rem 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+      margin-bottom: 1.5rem;
+    }
+
+    /* ME FILTER BAR STYLING */
+    .me-filter-bar {
+      background: #f1f5f9;
+      padding: 0.8rem 1rem;
+      border-radius: 10px;
+      margin-bottom: 1.2rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1.2rem;
+    }
+
+    .me-filter-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #33409c;
+      white-space: nowrap;
+    }
+
+    .me-select-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .me-select-group label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #334155;
+      white-space: nowrap;
+    }
+
+    /* SELECTION HEADER BAR WITH TAMBAH & HAPUS BUTTONS */
+    .selections-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .selections-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .btn-group-column {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-add {
+      padding: 0.35rem 1rem;
+      border-radius: 6px;
+      border: 1px solid #16a34a;
+      background: #16a34a;
+      color: #ffffff;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-add:hover {
+      background: #15803d;
+    }
+
+    .btn-delete {
+      padding: 0.35rem 1rem;
+      border-radius: 6px;
+      border: 1px solid #dc2626;
+      background: #dc2626;
+      color: #ffffff;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-delete:hover {
+      background: #b91c1c;
+    }
+
+    /* DYNAMIC SELECTIONS CONTAINER */
+    .selections-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .selection-row-card {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 0.9rem 1.1rem;
+    }
+
+    .selection-row-header {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #33409c;
+      margin-bottom: 0.6rem;
+    }
+
+    .selection-inputs-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    @media (max-width: 800px) {
+      .selection-inputs-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .filter-group label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #444;
+      min-width: 65px;
+    }
+
+    select, input[type="number"] {
+      width: 100%;
+      padding: 0.35rem 0.65rem;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      font-size: 0.85rem;
+      color: #1e293b;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    select:focus, input[type="number"]:focus {
+      border-color: #3b82f6;
+    }
+
+    /* ACTION BAR */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .btn-apply {
+      padding: 0.45rem 1.5rem;
+      border-radius: 999px;
+      border: 1px solid #33409c;
+      background: #33409c;
+      color: #ffffff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-apply:hover {
+      background: #252f75;
+    }
+
+    .record-info {
+      font-size: 0.85rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    /* SINGLE UNIFIED DASHBOARD SCROLL CONTAINER */
+    .dashboard-scroll-wrapper {
+      background: #ffffff;
+      padding: 1.25rem 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+      overflow: auto;
+      max-height: 82vh;
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    table.summary-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.85rem;
+      text-align: left;
+      min-width: max-content;
+    }
+
+    table.summary-table th, table.summary-table td {
+      padding: 0.55rem 0.8rem;
+      border-bottom: 1px solid #cbd5e1;
+      border-right: 1px solid #cbd5e1;
+      vertical-align: middle;
+      min-width: 260px;
+    }
+
+    /* 1. FREEZE FIRST COLUMN CONTINUOUSLY (STICKY LEFT) */
+    table.summary-table th:first-child,
+    table.summary-table td:first-child {
+      position: sticky;
+      left: 0;
+      background: #ffffff;
+      z-index: 10;
+      width: 320px;
+      min-width: 300px;
+      max-width: 350px;
+      border-left: 1px solid #cbd5e1;
+      border-right: 2px solid #94a3b8;
+      box-shadow: 3px 0 6px rgba(0, 0, 0, 0.06);
+    }
+
+    /* 2. FREEZE TOP 4 ROWS (STICKY TOP UP TO JUMLAH NOTIFIKASI KES) */
+    table.summary-table thead tr.sticky-row-0 th {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: #f1f5f9;
+      border-top: 1px solid #cbd5e1;
+    }
+
+    table.summary-table thead tr.sticky-row-1 th {
+      position: sticky;
+      top: 36px;
+      z-index: 20;
+      background: #ffffff;
+    }
+
+    table.summary-table thead tr.sticky-row-2 th {
+      position: sticky;
+      top: 71px;
+      z-index: 20;
+      background: #ffffff;
+    }
+
+    table.summary-table thead tr.sticky-row-3 th {
+      position: sticky;
+      top: 106px;
+      z-index: 20;
+      background: #f8fafc;
+      font-weight: 700;
+      border-bottom: 2px solid #94a3b8;
+    }
+
+    /* INTERSECTION CELLS (TOP-LEFT CORNER STICKY HIGH Z-INDEX) */
+    table.summary-table thead tr.sticky-row-0 th:first-child {
+      z-index: 30;
+      background: #f1f5f9;
+    }
+    table.summary-table thead tr.sticky-row-1 th:first-child {
+      z-index: 30;
+      background: #ffffff;
+    }
+    table.summary-table thead tr.sticky-row-2 th:first-child {
+      z-index: 30;
+      background: #ffffff;
+    }
+    table.summary-table thead tr.sticky-row-3 th:first-child {
+      z-index: 30;
+      background: #f8fafc;
+    }
+
+    table.summary-table tr.section-header td {
+      background: #e2e8f0;
+      font-weight: 700;
+      color: #33409c;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+    }
+
+    table.summary-table tr.section-header td:first-child {
+      background: #e2e8f0;
+    }
+
+    .rate-text {
+      color: #b91c1c;
+      font-weight: 700;
+    }
+
+    /* CHART CELL WRAPPER */
+    .chart-cell-wrapper {
+      position: relative;
+      width: 100%;
+      height: 250px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER SECTION -->
+  <div class="top-bar">
+    <div>
+      <h1>Pemantauan Siasatan Kes Disyaki Measles – Malaysia</h1>
+      <div class="small-text">
+        <b>Made by Dr Abdul Ahmad Syafiq bin Hussein (credit to Dr Mohd Syis Zulkipli)</b>
+      </div>
+      <div class="small-text">
+        Upload file from Sistem Maklumat Siasatan Measles (SM2) – Ekspot WHO Excel/CSV
+      </div>
+      <div class="small-text">
+        Pilih negeri, daerah, jumlah penduduk, status kes, dan Minggu Epidemiologi (ME)
+      </div>
+    </div>
+
+    <!-- UPLOAD BUTTON CONTAINER -->
+    <div class="upload-box">
+      <div class="badge">Upload File SM2</div>
+      <input id="fileInput" type="file" accept=".xls,.xlsx,.csv" />
+      <div id="statusMessage">Menunggu fail data...</div>
+    </div>
+  </div>
+
+  <!-- CONTROLS CARD -->
+  <div class="controls-card">
+    
+    <!-- MINGGU EPIDEMIOLOGI (ME) RANGE FILTER BAR (BASED ON NOTIFIED DATE) -->
+    <div class="me-filter-bar">
+      <div class="me-filter-title">🗓️ Tapis Minggu Epidemiologi Notifikasi (ME):</div>
+      <div class="me-select-group">
+        <label for="meStartSelect">Dari ME:</label>
+        <select id="meStartSelect">
+          <option value="1">Semua / ME 1</option>
+        </select>
+      </div>
+      <div class="me-select-group">
+        <label for="meEndSelect">Hingga ME:</label>
+        <select id="meEndSelect">
+          <option value="52">Semua / ME 52</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- SELECTIONS HEADER WITH TAMBAH & HAPUS BUTTONS -->
+    <div class="selections-header">
+      <div class="selections-title">Pilihan Parameter Perbandingan:</div>
+      <div class="btn-group-column">
+        <button id="addSelectionBtn" class="btn-add">+ Tambah Pilihan</button>
+        <button id="deleteSelectionBtn" class="btn-delete">- Hapus Pilihan</button>
+      </div>
+    </div>
+
+    <!-- DYNAMIC SELECTIONS CONTAINER -->
+    <div id="selectionsContainer" class="selections-container">
+      <!-- Dynamic Selection Cards Rendered via JS -->
+    </div>
+
+    <!-- ACTION BUTTON -->
+    <div class="action-bar">
+      <button id="applyBtn" class="btn-apply">Apply Filter</button>
+      <span id="recordInfo" class="record-info"></span>
+    </div>
+  </div>
+
+  <!-- SINGLE CONSOLIDATED DASHBOARD TABLE -->
+  <div class="dashboard-scroll-wrapper">
+    <table id="summaryTable" class="summary-table">
+      <!-- Dynamic Table Header and Body rendered via JS -->
+    </table>
+  </div>
+
+  <script>
+    let rawRows = [];
+    let selectionCount = 1;
+    let chartStore = {};
+
+    const MONTH_NAMES = [
+      "Jan", "Feb", "Mac", "Apr", "Mei", "Jun", 
+      "Jul", "Ogo", "Sep", "Okt", "Nov", "Dis"
+    ];
+
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        rawRows = XLSX.utils.sheet_to_json(worksheet);
+
+        document.getElementById('statusMessage').innerText = `🟢 Berjaya! ${rawRows.length.toLocaleString()} rekod dibaca.`;
+        
+        populateMEDropdowns();
+        renderSelectionInputs();
+        updateFilteredRecords();
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    function renderSelectionInputs() {
+      const container = document.getElementById('selectionsContainer');
+      
+      const currentValues = [];
+      for (let i = 1; i <= selectionCount; i++) {
+        const neg = document.getElementById(`negeriSelect${i}`) ? document.getElementById(`negeriSelect${i}`).value : '';
+        const dae = document.getElementById(`daerahSelect${i}`) ? document.getElementById(`daerahSelect${i}`).value : '';
+        const pop = document.getElementById(`populasiInput${i}`) ? document.getElementById(`populasiInput${i}`).value : '';
+        currentValues.push({ neg, dae, pop });
+      }
+
+      container.innerHTML = '';
+
+      const stateSet = new Set();
+      rawRows.forEach(row => {
+        const stateVal = row['Negeri'] || row['NEGERI'] || row['State'] || row['STATE'];
+        if (stateVal) stateSet.add(stateVal.toString().trim());
+      });
+      const sortedStates = Array.from(stateSet).sort();
+
+      for (let i = 1; i <= selectionCount; i++) {
+        const savedVal = currentValues[i - 1] || { neg: '', dae: '', pop: '' };
+
+        const card = document.createElement('div');
+        card.className = 'selection-row-card';
+        card.innerHTML = `
+          <div class="selection-row-header">Pilihan ${i}</div>
+          <div class="selection-inputs-grid">
+            <div class="filter-group">
+              <label for="negeriSelect${i}">Negeri:</label>
+              <select id="negeriSelect${i}"><option value="">Semua Negeri</option></select>
+            </div>
+            <div class="filter-group">
+              <label for="daerahSelect${i}">Daerah:</label>
+              <select id="daerahSelect${i}"><option value="">Semua Daerah</option></select>
+            </div>
+            <div class="filter-group">
+              <label for="populasiInput${i}">Populasi:</label>
+              <input type="number" id="populasiInput${i}" placeholder="cth: 100000" value="${savedVal.pop}" />
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+
+        const negeriSel = document.getElementById(`negeriSelect${i}`);
+        sortedStates.forEach(st => {
+          const opt = document.createElement('option');
+          opt.value = st;
+          opt.textContent = st;
+          negeriSel.appendChild(opt);
+        });
+        negeriSel.value = savedVal.neg;
+
+        negeriSel.addEventListener('change', () => populateDaerahDropdownFor(i));
+        populateDaerahDropdownFor(i, savedVal.dae);
+      }
+    }
+
+    function populateDaerahDropdownFor(index, savedDistrict = '') {
+      const selectedState = document.getElementById(`negeriSelect${index}`).value;
+      const daerahSel = document.getElementById(`daerahSelect${index}`);
+      const districtSet = new Set();
+
+      rawRows.forEach(row => {
+        const stateVal = (row['Negeri'] || row['NEGERI'] || row['State'] || row['STATE'] || '').toString().trim();
+        const districtVal = row['Daerah'] || row['DAERAH'] || row['District'] || row['DISTRICT'];
+
+        if (!selectedState || stateVal === selectedState) {
+          if (districtVal) districtSet.add(districtVal.toString().trim());
+        }
+      });
+
+      daerahSel.innerHTML = '<option value="">Semua Daerah</option>';
+      Array.from(districtSet).sort().forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        daerahSel.appendChild(opt);
+      });
+      daerahSel.value = savedDistrict;
+    }
+
+    document.getElementById('addSelectionBtn').addEventListener('click', () => {
+      selectionCount++;
+      renderSelectionInputs();
+    });
+
+    document.getElementById('deleteSelectionBtn').addEventListener('click', () => {
+      if (selectionCount > 1) {
+        selectionCount--;
+        renderSelectionInputs();
+      }
+    });
+
+    function parseDateVal(val) {
+      if (val === undefined || val === null || val === '') return null;
+      if (typeof val === 'number') {
+        return new Date(Math.round((val - 25569) * 86400 * 1000));
+      }
+      const str = val.toString().trim();
+      if (!str) return null;
+
+      let parts = null;
+      if (str.includes('/')) {
+        parts = str.split('/');
+      } else if (str.includes('-')) {
+        parts = str.split('-');
+      }
+
+      if (parts && parts.length === 3) {
+        if (parts[0].length === 4) {
+          const y = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10) - 1;
+          const d = parseInt(parts[2], 10);
+          return new Date(y, m, d);
+        } else {
+          const d = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10) - 1;
+          const y = parseInt(parts[2], 10);
+          return new Date(y, m, d);
+        }
+      }
+
+      const d = new Date(str);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function getEpiWeek(d) {
+      if (!d || isNaN(d.getTime())) return null;
+      const year = d.getFullYear();
+      
+      const jan4 = new Date(year, 0, 4);
+      const offset = (jan4.getDay() + 7) % 7;
+      const me1Start = new Date(year, 0, 4 - offset);
+
+      if (d < me1Start) {
+        const prevJan4 = new Date(year - 1, 0, 4);
+        const prevOffset = (prevJan4.getDay() + 7) % 7;
+        const prevMe1Start = new Date(year - 1, 0, 4 - prevOffset);
+        const diffDaysPrev = Math.floor((d - prevMe1Start) / (1000 * 60 * 60 * 24));
+        return { year: year - 1, week: Math.floor(diffDaysPrev / 7) + 1 };
+      }
+
+      const nextJan4 = new Date(year + 1, 0, 4);
+      const nextOffset = (nextJan4.getDay() + 7) % 7;
+      const nextMe1Start = new Date(year + 1, 0, 4 - nextOffset);
+
+      if (d >= nextMe1Start) {
+        return { year: year + 1, week: 1 };
+      }
+
+      const diffDays = Math.floor((d - me1Start) / (1000 * 60 * 60 * 24));
+      return { year: year, week: Math.floor(diffDays / 7) + 1 };
+    }
+
+    function getWeeksInYear(year) {
+      const jan4 = new Date(year, 0, 4);
+      const offset = (jan4.getDay() + 7) % 7;
+      const me1Start = new Date(year, 0, 4 - offset);
+
+      const nextJan4 = new Date(year + 1, 0, 4);
+      const nextOffset = (nextJan4.getDay() + 7) % 7;
+      const nextMe1Start = new Date(year + 1, 0, 4 - nextOffset);
+
+      return Math.round((nextMe1Start - me1Start) / (7 * 86400 * 1000));
+    }
+
+    function formatDateStr(d) {
+      if (!d || isNaN(d.getTime())) return '';
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+
+    function populateMEDropdowns() {
+      const meStartSel = document.getElementById('meStartSelect');
+      const meEndSel = document.getElementById('meEndSelect');
+
+      meStartSel.innerHTML = '';
+      meEndSel.innerHTML = '';
+
+      let sampleYear = 2026;
+      for (let r of rawRows) {
+        const d = parseDateVal(r['Notified'] || r['Tarikh_Notifikasi'] || r['Date_Of_Notification'] || r['NOTIFIED']);
+        if (d && !isNaN(d.getTime())) {
+          sampleYear = d.getFullYear();
+          break;
+        }
+      }
+
+      const totalWeeks = getWeeksInYear(sampleYear);
+
+      const jan4 = new Date(sampleYear, 0, 4);
+      const offset = (jan4.getDay() + 7) % 7;
+      const me1Start = new Date(sampleYear, 0, 4 - offset);
+
+      for (let week = 1; week <= totalWeeks; week++) {
+        const wStart = new Date(me1Start.getTime() + (week - 1) * 7 * 86400 * 1000);
+        const wEnd = new Date(wStart.getTime() + 6 * 86400 * 1000);
+
+        const optText = `ME ${week} (${formatDateStr(wStart)} - ${formatDateStr(wEnd)})`;
+
+        const opt1 = document.createElement('option');
+        opt1.value = week;
+        opt1.textContent = optText;
+        meStartSel.appendChild(opt1);
+
+        const opt2 = document.createElement('option');
+        opt2.value = week;
+        opt2.textContent = optText;
+        meEndSel.appendChild(opt2);
+      }
+
+      meStartSel.value = "1";
+      meEndSel.value = String(totalWeeks);
+    }
+
+    function hasValue(r, keys) {
+      for (let k of keys) {
+        if (r[k] !== undefined && r[k] !== null) {
+          const s = r[k].toString().trim().toUpperCase();
+          if (s !== '' && s !== 'N/A' && s !== 'NULL' && s !== 'NONE') return true;
+        }
+      }
+      return false;
+    }
+
+    function extractMonthIndex(row) {
+      const rawMonth = row['Month_Of_OnsetRash'] || row['Month_of_OnsetRash'] || row['MONTH_OF_ONSETRASH'] || row['Month_Of_RashOnset'];
+
+      if (rawMonth !== undefined && rawMonth !== null && rawMonth !== '') {
+        const num = Number(rawMonth);
+        if (!isNaN(num) && num >= 1 && num <= 12) return num - 1;
+        if (!isNaN(num) && num >= 0 && num <= 11) return num;
+
+        const str = rawMonth.toString().trim().toLowerCase();
+        if (str.includes('jan')) return 0;
+        if (str.includes('feb')) return 1;
+        if (str.includes('mac') || str.includes('mar')) return 2;
+        if (str.includes('apr')) return 3;
+        if (str.includes('mei') || str.includes('may')) return 4;
+        if (str.includes('jun')) return 5;
+        if (str.includes('jul')) return 6;
+        if (str.includes('ogo') || str.includes('aug')) return 7;
+        if (str.includes('sep')) return 8;
+        if (str.includes('okt') || str.includes('oct')) return 9;
+        if (str.includes('nov')) return 10;
+        if (str.includes('dis') || str.includes('dec')) return 11;
+      }
+
+      const rawDate = row['Rash_Onset_Date'] || row['Tarikh_Onset'] || row['Tarikh Rash Onset'] || row['Onset_Date'] || row['Tarikh Onset'];
+      if (rawDate) {
+        const parsedDate = parseDateVal(rawDate);
+        if (parsedDate && !isNaN(parsedDate.getTime())) return parsedDate.getMonth();
+      }
+
+      return null;
+    }
+
+    document.getElementById('applyBtn').addEventListener('click', updateFilteredRecords);
+
+    function destroyAllCharts() {
+      Object.keys(chartStore).forEach(key => {
+        if (chartStore[key]) {
+          chartStore[key].destroy();
+        }
+      });
+      chartStore = {};
+    }
+
+    function updateFilteredRecords() {
+      if (!rawRows.length) return;
+
+      destroyAllCharts();
+
+      const startME = parseInt(document.getElementById('meStartSelect').value, 10) || 1;
+      const endME = parseInt(document.getElementById('meEndSelect').value, 10) || 52;
+
+      let headerHTML = `<thead>`;
+      
+      headerHTML += `<tr class="sticky-row-0"><th>Indikator / Parameter</th>`;
+      for (let i = 1; i <= selectionCount; i++) {
+        headerHTML += `<th>Pilihan ${i}</th>`;
+      }
+      headerHTML += `</tr>`;
+
+      headerHTML += `<tr class="sticky-row-1"><th>Negeri</th>`;
+      for (let i = 1; i <= selectionCount; i++) {
+        headerHTML += `<th id="resNegeri_${i}">-</th>`;
+      }
+      headerHTML += `</tr>`;
+
+      headerHTML += `<tr class="sticky-row-2"><th>Daerah</th>`;
+      for (let i = 1; i <= selectionCount; i++) {
+        headerHTML += `<th id="resDaerah_${i}">-</th>`;
+      }
+      headerHTML += `</tr>`;
+
+      headerHTML += `<tr class="sticky-row-3"><th>Jumlah Notifikasi Kes</th>`;
+      for (let i = 1; i <= selectionCount; i++) {
+        headerHTML += `<th id="resTotal_${i}">0</th>`;
+      }
+      headerHTML += `</tr>`;
+
+      headerHTML += `</thead>`;
+
+      const summaryBodyRows = [
+        { isHeader: true, title: 'Klasifikasi Kes (Case_Classification)' },
+        { id: 'resLabMeasles', label: 'Laboratory Confirmed Measles' },
+        { id: 'resClinical', label: 'Clinically Compatible With Measles' },
+        { id: 'resEpid', label: 'Epid-Linked Measles' },
+        { id: 'resLabRubella', label: 'Laboratory Confirmed Rubella' },
+        { id: 'resVAM', label: 'VAM (Vaccine-Associated Measles)' },
+        { id: 'resDiscard', label: 'Discard (Bukan Measles / Bukan Rubella)' },
+        { id: 'resPending', label: 'Pending (Belum Selesai)' },
+
+        { isHeader: true, title: 'Kadar Insiden Surveillance' },
+        { id: 'resIncidenceMeasles', label: '<b>Kadar Insiden Kes Measles</b><br><small>(Lab Confirmed + Clinically Compatible + Epid-link) / Populasi × 1,000,000</small>', isRate: true },
+        { id: 'resIncidenceRubella', label: '<b>Kadar Insiden Kes Rubella</b><br><small>(Laboratory Confirmed Rubella) / Populasi × 1,000,000</small>', isRate: true },
+        { id: 'resIncidenceDiscard', label: '<b>Kadar Insiden Bukan Kes Measles &amp; Bukan Rubella</b><br><small>(Discard + Pending Cases) / Populasi × 100,000</small>', isRate: true },
+
+        { isHeader: true, title: 'Analisis Visual Kes Measles' },
+        { chartType: 'pieChart', label: '<b>Kes Measles Breakdown</b><br><small>Pie Chart in % &amp; Numbers<br>(Lab Confirmed, Clinically Compatible &amp; Epid Linked)</small>' },
+        { chartType: 'genderPieChart', label: '<b>Kes Measles mengikut Gender</b><br><small>Pie Chart in % &amp; Numbers<br>(Lelaki vs Perempuan)</small>' },
+        { chartType: 'vaxChart', label: '<b>Kes Measles mengikut Status Vaksinasi</b><br><small>Stacked Column Chart<br>(Ada, Tiada, Tidak layak, Tidak diketahui)</small>' },
+        { chartType: 'ageChart', label: '<b>Kes Measles mengikut Kumpulan Umur</b><br><small>Column Chart<br>(&lt; 1 year old, 1-5 years old, 6-10 years old, 11-15 years old, 16-20 years old, &gt; 20 years old)</small>' },
+        { chartType: 'trendChart', label: '<b>Kes Measles mengikut Onset Ruam</b><br><small>Stacked Column Chart<br>(Lab Confirmed, Clinically Compatible &amp; Epid Linked mengikut Bulan)</small>' },
+        { chartType: 'measlesMukimChart', label: '<b>Kes Measles mengikut Mukim</b><br><small>Stacked Column Chart<br>(Lab Confirmed, Clinically Compatible &amp; Epid Linked mengikut Mukim/Village)</small>' },
+
+        { isHeader: true, title: 'Analisis Visual Kes Rubella' },
+        { chartType: 'rubellaGenderChart', label: '<b>Kes Rubella mengikut Gender</b><br><small>Pie Chart in % &amp; Numbers<br>(Lelaki vs Perempuan)</small>' },
+        { chartType: 'rubellaVaxChart', label: '<b>Kes Rubella mengikut Status Vaksinasi</b><br><small>Stacked Column Chart<br>(Ada, Tiada, Tidak layak, Tidak diketahui)</small>' },
+        { chartType: 'rubellaAgeChart', label: '<b>Kes Rubella mengikut Kumpulan Umur</b><br><small>Column Chart<br>(&lt; 1 year old, 1-5 years old, 6-10 years old, 11-15 years old, 16-20 years old, &gt; 20 years old)</small>' },
+        { chartType: 'rubellaTrendChart', label: '<b>Kes Rubella mengikut Onset Ruam</b><br><small>Column Chart<br>(Laboratory Confirmed Rubella mengikut Bulan)</small>' },
+        { chartType: 'rubellaMukimChart', label: '<b>Kes Rubella mengikut Mukim</b><br><small>Column Chart<br>(Bilangan Kes Confirmed Rubella mengikut Mukim/Village)</small>' },
+
+        { isHeader: true, title: 'Pencapaian Indikator Program Eliminasi Measles' },
+        { id: 'indMeaslesRate', label: '<b>1. Kadar Insiden Kes Measles</b><br><small><b>Sasaran:</b> &lt; 1 / 1,000,000 penduduk</small>' },
+        { id: 'indDiscardRate', label: '<b>2. Kadar Pelaporan Kes Bukan Measles &amp; Bukan Rubella</b><br><small><b>Sasaran:</b> &ge; 2 kes / 100,000 penduduk (Termasuk Discard + Pending)</small>' },
+        { id: 'indDistrictAchieve', label: '<b>3. Peratus Daerah Melaporkan Kadar Bukan Measles &amp; Rubella &ge; 2/100,000</b><br><small><b>Sasaran:</b> &ge; 80% daripada jumlah daerah</small>' },
+        { id: 'indInvestigate48h', label: '<b>4. Peratus Kes Suspek dengan Siasatan Lengkap 48 Jam</b><br><small><b>Sasaran:</b> &ge; 80% daripada jumlah kes suspek (10 pembolehubah lengkap)</small>' },
+        { id: 'indBloodSample28d', label: '<b>5. Peratus Kes Suspek dengan Pengambilan Sampel Darah &le; 28 Hari Selepas Onset Ruam</b><br><small><b>Sasaran:</b> &ge; 80% daripada jumlah kes suspek (kecuali Epid-Linked Measles)</small>' },
+        { id: 'indSampleLab5d', label: '<b>6. Peratus Sampel Dihantar ke Makmal dalam Masa &le; 5 Hari</b><br><small><b>Sasaran:</b> &ge; 80% daripada sampel yang diterima makmal (Beza Diterima - Dikutip &le; 5 hari)</small>' },
+        { id: 'indResultReceived4d', label: '<b>7. Peratus Keputusan Sampel Diterima dalam Masa &le; 4 Hari</b><br><small><b>Sasaran:</b> &ge; 80% daripada sampel yang diterima makmal (Beza Dilapor - Diterima &le; 4 hari)</small>' },
+        { id: 'indOutbreakGenotype', label: '<b>8. Peratus Wabak Measles dengan Genotype Data</b><br><small><b>Sasaran:</b> &ge; 80% daripada jumlah kes wabak (Outbreak_Assoc = Y)</small>' },
+        { id: 'indConfirmedSource', label: '<b>9. Peratus Kes Disahkan Measles dengan Punca Jangkitan</b><br><small><b>Sasaran:</b> &ge; 80% daripada jumlah kes lab confirmed measles (_Type tidak kosong)</small>' }
+      ];
+
+      let bodyHTML = `<tbody>`;
+      summaryBodyRows.forEach(rowDef => {
+        if (rowDef.isHeader) {
+          bodyHTML += `<tr class="section-header"><td colspan="${selectionCount + 1}">${rowDef.title}</td></tr>`;
+        } else if (rowDef.chartType) {
+          bodyHTML += `<tr><td>${rowDef.label}</td>`;
+          for (let i = 1; i <= selectionCount; i++) {
+            bodyHTML += `<td><div class="chart-cell-wrapper"><canvas id="${rowDef.chartType}_${i}"></canvas></div></td>`;
+          }
+          bodyHTML += `</tr>`;
+        } else {
+          bodyHTML += `<tr><td>${rowDef.label}</td>`;
+          for (let i = 1; i <= selectionCount; i++) {
+            const cellClass = rowDef.isRate ? 'class="rate-text"' : '';
+            bodyHTML += `<td id="${rowDef.id}_${i}" ${cellClass}>-</td>`;
+          }
+          bodyHTML += `</tr>`;
+        }
+      });
+      bodyHTML += `</tbody>`;
+
+      document.getElementById('summaryTable').innerHTML = headerHTML + bodyHTML;
+
+      for (let num = 1; num <= selectionCount; num++) {
+        const selectedState = document.getElementById(`negeriSelect${num}`) ? document.getElementById(`negeriSelect${num}`).value : '';
+        const selectedDistrict = document.getElementById(`daerahSelect${num}`) ? document.getElementById(`daerahSelect${num}`).value : '';
+        const popVal = parseFloat(document.getElementById(`populasiInput${num}`) ? document.getElementById(`populasiInput${num}`).value : '') || 0;
+
+        const stateLabel = selectedState || 'Semua Negeri';
+        const districtLabel = selectedDistrict || 'Semua Daerah';
+
+        document.getElementById(`resNegeri_${num}`).innerText = stateLabel;
+        document.getElementById(`resDaerah_${num}`).innerText = districtLabel;
+
+        const filteredRows = rawRows.filter(row => {
+          const stateVal = (row['Negeri'] || row['NEGERI'] || row['State'] || row['STATE'] || '').toString().trim();
+          const districtVal = (row['Daerah'] || row['DAERAH'] || row['District'] || row['DISTRICT'] || '').toString().trim();
+
+          const matchState = !selectedState || stateVal === selectedState;
+          const matchDistrict = !selectedDistrict || districtVal === selectedDistrict;
+
+          const notifDate = parseDateVal(row['Notified'] || row['Tarikh_Notifikasi'] || row['Date_Of_Notification'] || row['NOTIFIED']);
+          const epiInfo = getEpiWeek(notifDate);
+          let matchME = true;
+          if (epiInfo) {
+            matchME = epiInfo.week >= startME && epiInfo.week <= endME;
+          }
+
+          return matchState && matchDistrict && matchME;
+        });
+
+        let totalNotif = filteredRows.length;
+        let labMeasles = 0, clinical = 0, epid = 0, labRubella = 0, vam = 0, discard = 0, pending = 0;
+        let maleCount = 0, femaleCount = 0;
+        
+        let investigated48hCompleteCount = 0;
+        let bloodSampleWithin28dCount = 0;
+        
+        let serologyReceivedCount = 0; // Denominator for Ind 6 & 7 (Cases where sample was actually received by lab)
+        let sampleOnTime5dCount = 0;   // Numerator for Ind 6
+        let resultOnTime4dCount = 0;   // Numerator for Ind 7
+
+        let outbreakCasesCount = 0;
+        let outbreakGenotypeCount = 0;
+        let labConfirmedKnownSourceCount = 0;
+
+        const vaxCounts = { "Ada": 0, "Tiada": 0, "Tidak layak": 0, "Tidak diketahui": 0 };
+
+        const ageCounts = {
+          "< 1 year old": 0,
+          "1-5 years old": 0,
+          "6-10 years old": 0,
+          "11-15 years old": 0,
+          "16-20 years old": 0,
+          "> 20 years old": 0
+        };
+
+        const measlesMukimMap = {};
+
+        let rubellaMaleCount = 0, rubellaFemaleCount = 0;
+        const rubellaVaxCounts = { "Ada": 0, "Tiada": 0, "Tidak layak": 0, "Tidak diketahui": 0 };
+        const rubellaAgeCounts = {
+          "< 1 year old": 0,
+          "1-5 years old": 0,
+          "6-10 years old": 0,
+          "11-15 years old": 0,
+          "16-20 years old": 0,
+          "> 20 years old": 0
+        };
+        const monthlyRubella = new Array(12).fill(0);
+        const rubellaMukimMap = {};
+
+        const districtDiscardMap = {};
+
+        const monthlyLab = new Array(12).fill(0);
+        const monthlyClinical = new Array(12).fill(0);
+        const monthlyEpid = new Array(12).fill(0);
+
+        filteredRows.forEach(r => {
+          const rawClassification = r['Case_Classification'] || r['case_classification'] || r['CASE_CLASSIFICATION'] || r['Klasifikasi'] || r['Status'] || '';
+          const klass = rawClassification.toString().trim().toUpperCase();
+
+          const distName = (r['Daerah'] || r['DAERAH'] || r['District'] || r['DISTRICT'] || 'Lain-lain').toString().trim();
+          if (!districtDiscardMap[distName]) {
+            districtDiscardMap[distName] = 0;
+          }
+
+          const isLab = klass.includes('LAB') && klass.includes('MEASLES');
+          const isClin = klass.includes('CLINIC') || klass.includes('KLINIKAL');
+          const isEpid = klass.includes('EPID') || klass.includes('EPI');
+          const isRubella = klass.includes('RUBELLA');
+
+          if (isLab) labMeasles++;
+          else if (isClin) clinical++;
+          else if (isEpid) epid++;
+          else if (isRubella) labRubella++;
+          else if (klass.includes('VAM') || klass.includes('VACCINE')) vam++;
+          else if (klass.includes('DISCARD') || klass.includes('BUKAN')) {
+            discard++;
+            districtDiscardMap[distName]++;
+          } else {
+            pending++;
+            districtDiscardMap[distName]++;
+          }
+
+          if (isRubella) {
+            const mRubIdx = extractMonthIndex(r);
+            if (mRubIdx !== null) {
+              monthlyRubella[mRubIdx]++;
+            }
+
+            const mukimValRub = r['Village'] || r['VILLAGE'] || r['Mukim'] || r['MUKIM'] || r['village'] || r['mukim'];
+            const mukimNameRub = (mukimValRub !== undefined && mukimValRub !== null && mukimValRub.toString().trim() !== '') 
+                                 ? mukimValRub.toString().trim().toUpperCase() 
+                                 : 'LAIN-LAIN / TIADA DATA';
+            rubellaMukimMap[mukimNameRub] = (rubellaMukimMap[mukimNameRub] || 0) + 1;
+
+            const rawSexRub = (r['Sex'] || r['SEX'] || r['Gender'] || r['Jantina'] || '').toString().trim().toUpperCase();
+            if (rawSexRub.startsWith('M') || rawSexRub.startsWith('L')) {
+              rubellaMaleCount++;
+            } else if (rawSexRub.startsWith('F') || rawSexRub.startsWith('P')) {
+              rubellaFemaleCount++;
+            }
+
+            const rawVaxRub = (r['Vaccination'] || r['vaccination'] || r['VACCINATION'] || r['Vaccination_Status'] || r['Status_Vaksinasi'] || '').toString().trim().toUpperCase();
+
+            if (rawVaxRub === 'YES' || rawVaxRub.includes('ADA') || rawVaxRub === 'YA' || rawVaxRub.includes('DOS')) {
+              rubellaVaxCounts["Ada"]++;
+            } else if (rawVaxRub.includes('NOT QUALIFIED') || rawVaxRub.includes('NOT ELIGIBLE') || rawVaxRub.includes('TIDAK LAYAK') || rawVaxRub.includes('BELUM LAYAK')) {
+              rubellaVaxCounts["Tidak layak"]++;
+            } else if (rawVaxRub === 'NO' || rawVaxRub.includes('TIADA') || (rawVaxRub.includes('TIDAK') && !rawVaxRub.includes('DIKETAHUI') && !rawVaxRub.includes('LAYAK'))) {
+              rubellaVaxCounts["Tiada"]++;
+            } else {
+              rubellaVaxCounts["Tidak diketahui"]++;
+            }
+
+            const rawAgeRub = r['Age'] !== undefined ? r['Age'] : (r['AGE'] !== undefined ? r['AGE'] : r['Umur']);
+            const rawAgeInRub = (r['AgeIn'] || r['AGEIN'] || r['Age_In'] || r['Age Unit'] || r['Unit_Umur'] || '').toString().trim().toLowerCase();
+
+            if (rawAgeRub !== undefined && rawAgeRub !== null && rawAgeRub !== '') {
+              const ageValRub = parseFloat(rawAgeRub);
+              if (!isNaN(ageValRub)) {
+                if (rawAgeInRub.includes('month') || rawAgeInRub.includes('bulan') || rawAgeInRub === 'm') {
+                  rubellaAgeCounts["< 1 year old"]++;
+                } else {
+                  if (ageValRub < 1) rubellaAgeCounts["< 1 year old"]++;
+                  else if (ageValRub >= 1 && ageValRub <= 5) rubellaAgeCounts["1-5 years old"]++;
+                  else if (ageValRub >= 6 && ageValRub <= 10) rubellaAgeCounts["6-10 years old"]++;
+                  else if (ageValRub >= 11 && ageValRub <= 15) rubellaAgeCounts["11-15 years old"]++;
+                  else if (ageValRub >= 16 && ageValRub <= 20) rubellaAgeCounts["16-20 years old"]++;
+                  else if (ageValRub >= 21) rubellaAgeCounts["> 20 years old"]++;
+                }
+              }
+            }
+          }
+
+          // INDICATOR 4 EVALUATION
+          const investDateVal = r['Investigation'] || r['Tarikh_Siasatan'] || r['Date_Of_Investigation'] || r['INVESTIGATION'];
+          const notifDateVal = r['Notified'] || r['Tarikh_Notifikasi'] || r['Date_Of_Notification'] || r['NOTIFIED'];
+
+          const dInvest = parseDateVal(investDateVal);
+          const dNotif = parseDateVal(notifDateVal);
+
+          let isWithin48h = false;
+          if (dInvest && dNotif) {
+            const dateInvestOnly = new Date(dInvest.getFullYear(), dInvest.getMonth(), dInvest.getDate());
+            const dateNotifOnly = new Date(dNotif.getFullYear(), dNotif.getMonth(), dNotif.getDate());
+            const diffDays = Math.round((dateInvestOnly - dateNotifOnly) / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0 || diffDays === 1 || diffDays === 2) {
+              isWithin48h = true;
+            }
+          }
+
+          const has1 = hasValue(r, ['Investigation', 'Tarikh_Siasatan', 'Date_Of_Investigation', 'INVESTIGATION']);
+          const has2 = hasValue(r, ['Notified', 'Tarikh_Notifikasi', 'Date_Of_Notification', 'NOTIFIED']);
+          const has3 = hasValue(r, ['RN_NO', 'RN_No', 'RNNo', 'RN NO', 'No_RN', 'RN_NO_']);
+          const has4 = hasValue(r, ['Age', 'AGE', 'Umur']);
+          const has5 = hasValue(r, ['Sex', 'SEX', 'Gender', 'Jantina']);
+          const has6 = hasValue(r, ['_Address', 'Address', 'ADDRESS', 'Alamat', '_ADDRESS']);
+          const has7 = hasValue(r, ['Vaccination', 'VACCINATION', 'Vaccination_Status', 'Status_Vaksinasi']);
+          const has8 = hasValue(r, ['Onset_of_rash', 'Onset_Of_Rash', 'ONSET_OF_RASH', 'Rash_Onset_Date', 'Tarikh_Onset', 'Month_Of_OnsetRash']);
+          const has9 = hasValue(r, ['1_serology_collected', '1_Serology_Collected', '1_SEROLOGY_COLLECTED', 'Serology_Collected', '1st_Serology_Collected']);
+          const has10 = hasValue(r, ['Travel_History', 'TRAVEL_HISTORY', 'Travel_history', 'Sejarah_Perjalanan']);
+
+          const is10VarsComplete = has1 && has2 && has3 && has4 && has5 && has6 && has7 && has8 && has9 && has10;
+
+          if (isWithin48h && is10VarsComplete) {
+            investigated48hCompleteCount++;
+          }
+
+          // INDICATOR 5 EVALUATION
+          const serologyColVal = r['1_serology_collected'] || r['1_Serology_Collected'] || r['1_SEROLOGY_COLLECTED'] || r['Serology_Collected'] || r['1st_Serology_Collected'];
+          const onsetVal = r['Onset_of_rash'] || r['Onset_Of_Rash'] || r['ONSET_OF_RASH'] || r['Rash_Onset_Date'] || r['Tarikh_Onset'];
+
+          const dSerology = parseDateVal(serologyColVal);
+          const dOnset = parseDateVal(onsetVal);
+
+          if (dSerology && dOnset) {
+            const dateSerologyOnly = new Date(dSerology.getFullYear(), dSerology.getMonth(), dSerology.getDate());
+            const dateOnsetOnly = new Date(dOnset.getFullYear(), dOnset.getMonth(), dOnset.getDate());
+            const diffDaysSer = Math.round((dateSerologyOnly - dateOnsetOnly) / (1000 * 60 * 60 * 24));
+
+            if (diffDaysSer >= 0 && diffDaysSer <= 28) {
+              bloodSampleWithin28dCount++;
+            }
+          }
+
+          // STRICT INDICATOR 6 & 7 EVALUATION 
+          const hasSerologyReceived = hasValue(r, ['1_serology_received', '1_Serology_Received', '1_SEROLOGY_RECEIVED', 'Serology_Received', '1st_Serology_Received']);
+          
+          if (hasSerologyReceived) {
+            serologyReceivedCount++; // Only cases successfully sent to/received by the lab are included in the denominator
+
+            const serologyRecVal = r['1_serology_received'] || r['1_Serology_Received'] || r['1_SEROLOGY_RECEIVED'] || r['Serology_Received'] || r['1st_Serology_Received'];
+            const reportVal = r['date_reported'] || r['Date_Reported'] || r['DATE_REPORTED'] || r['Tarikh_Laporan'];
+
+            const dSerologyReceived = parseDateVal(serologyRecVal);
+            const dReported = parseDateVal(reportVal);
+
+            // Ind 6: Received <= 5 days after Collection
+            if (dSerology && dSerologyReceived) {
+              const dateColOnly = new Date(dSerology.getFullYear(), dSerology.getMonth(), dSerology.getDate());
+              const dateRecOnly = new Date(dSerologyReceived.getFullYear(), dSerologyReceived.getMonth(), dSerologyReceived.getDate());
+              const diffDaysLab = Math.round((dateRecOnly - dateColOnly) / (1000 * 60 * 60 * 24));
+
+              if (diffDaysLab >= 0 && diffDaysLab <= 5) {
+                sampleOnTime5dCount++;
+              }
+            }
+
+            // Ind 7: Reported <= 4 days after Received
+            if (dSerologyReceived && dReported) {
+              const dateRecOnly = new Date(dSerologyReceived.getFullYear(), dSerologyReceived.getMonth(), dSerologyReceived.getDate());
+              const dateRepOnly = new Date(dReported.getFullYear(), dReported.getMonth(), dReported.getDate());
+              const diffDaysRep = Math.round((dateRepOnly - dateRecOnly) / (1000 * 60 * 60 * 24));
+
+              if (diffDaysRep >= 0 && diffDaysRep <= 4) {
+                resultOnTime4dCount++;
+              }
+            }
+          }
+
+          const outbreakVal = (r['Outbreak_Assoc'] || r['OUTBREAK_ASSOC'] || r['Outbreak_assoc'] || '').toString().trim().toUpperCase();
+          if (outbreakVal === 'Y' || outbreakVal === 'YA' || outbreakVal === 'YES') {
+            outbreakCasesCount++;
+            const hasSecr = hasValue(r, ['Secr_Genotype', 'SECR_GENOTYPE', 'SecrGenotype']);
+            const hasUrine = hasValue(r, ['Urine_Genotype', 'URINE_GENOTYPE', 'UrineGenotype']);
+            if (hasSecr || hasUrine) {
+              outbreakGenotypeCount++;
+            }
+          }
+
+          if (isLab) {
+            const hasTypeSource = hasValue(r, ['_Type', '_TYPE', 'Type', 'TYPE', 'Punca_Jangkitan']);
+            if (hasTypeSource) {
+              labConfirmedKnownSourceCount++;
+            }
+          }
+
+          if (isLab || isClin || isEpid) {
+            const mukimValMeas = r['Village'] || r['VILLAGE'] || r['Mukim'] || r['MUKIM'] || r['village'] || r['mukim'];
+            const mukimNameMeas = (mukimValMeas !== undefined && mukimValMeas !== null && mukimValMeas.toString().trim() !== '') 
+                                  ? mukimValMeas.toString().trim().toUpperCase() 
+                                  : 'LAIN-LAIN / TIADA DATA';
+            
+            if (!measlesMukimMap[mukimNameMeas]) {
+              measlesMukimMap[mukimNameMeas] = { lab: 0, clinical: 0, epid: 0, total: 0 };
+            }
+            if (isLab) measlesMukimMap[mukimNameMeas].lab++;
+            else if (isClin) measlesMukimMap[mukimNameMeas].clinical++;
+            else if (isEpid) measlesMukimMap[mukimNameMeas].epid++;
+            measlesMukimMap[mukimNameMeas].total++;
+
+            const mIdx = extractMonthIndex(r);
+            if (mIdx !== null) {
+              if (isLab) monthlyLab[mIdx]++;
+              else if (isClin) monthlyClinical[mIdx]++;
+              else if (isEpid) monthlyEpid[mIdx]++;
+            }
+
+            const rawSex = (r['Sex'] || r['SEX'] || r['Gender'] || r['Jantina'] || '').toString().trim().toUpperCase();
+            if (rawSex.startsWith('M') || rawSex.startsWith('L')) {
+              maleCount++;
+            } else if (rawSex.startsWith('F') || rawSex.startsWith('P')) {
+              femaleCount++;
+            }
+
+            const rawVax = (r['Vaccination'] || r['vaccination'] || r['VACCINATION'] || r['Vaccination_Status'] || r['Status_Vaksinasi'] || '').toString().trim().toUpperCase();
+
+            if (rawVax === 'YES' || rawVax.includes('ADA') || rawVax === 'YA' || rawVax.includes('DOS')) {
+              vaxCounts["Ada"]++;
+            } else if (rawVax.includes('NOT QUALIFIED') || rawVax.includes('NOT ELIGIBLE') || rawVax.includes('TIDAK LAYAK') || rawVax.includes('BELUM LAYAK')) {
+              vaxCounts["Tidak layak"]++;
+            } else if (rawVax === 'NO' || rawVax.includes('TIADA') || (rawVax.includes('TIDAK') && !rawVax.includes('DIKETAHUI') && !rawVax.includes('LAYAK'))) {
+              vaxCounts["Tiada"]++;
+            } else {
+              vaxCounts["Tidak diketahui"]++;
+            }
+
+            const rawAge = r['Age'] !== undefined ? r['Age'] : (r['AGE'] !== undefined ? r['AGE'] : r['Umur']);
+            const rawAgeIn = (r['AgeIn'] || r['AGEIN'] || r['Age_In'] || r['Age Unit'] || r['Unit_Umur'] || '').toString().trim().toLowerCase();
+
+            if (rawAge !== undefined && rawAge !== null && rawAge !== '') {
+              const ageVal = parseFloat(rawAge);
+              if (!isNaN(ageVal)) {
+                if (rawAgeIn.includes('month') || rawAgeIn.includes('bulan') || rawAgeIn === 'm') {
+                  ageCounts["< 1 year old"]++;
+                } else {
+                  if (ageVal < 1) ageCounts["< 1 year old"]++;
+                  else if (ageVal >= 1 && ageVal <= 5) ageCounts["1-5 years old"]++;
+                  else if (ageVal >= 6 && ageVal <= 10) ageCounts["6-10 years old"]++;
+                  else if (ageVal >= 11 && ageVal <= 15) ageCounts["11-15 years old"]++;
+                  else if (ageVal >= 16 && ageVal <= 20) ageCounts["16-20 years old"]++;
+                  else if (ageVal >= 21) ageCounts["> 20 years old"]++;
+                }
+              }
+            }
+          }
+        });
+
+        document.getElementById(`resTotal_${num}`).innerText = totalNotif.toLocaleString();
+        document.getElementById(`resLabMeasles_${num}`).innerText = labMeasles.toLocaleString();
+        document.getElementById(`resClinical_${num}`).innerText = clinical.toLocaleString();
+        document.getElementById(`resEpid_${num}`).innerText = epid.toLocaleString();
+        document.getElementById(`resLabRubella_${num}`).innerText = labRubella.toLocaleString();
+        document.getElementById(`resVAM_${num}`).innerText = vam.toLocaleString();
+        document.getElementById(`resDiscard_${num}`).innerText = discard.toLocaleString();
+        document.getElementById(`resPending_${num}`).innerText = pending.toLocaleString();
+
+        const totalConfirmedMeasles = labMeasles + clinical + epid;
+        const nonMeaslesNonRubellaCount = discard + pending;
+
+        // CALCULATE RATES
+        if (popVal > 0) {
+          const measlesRateNum = (totalConfirmedMeasles / popVal) * 1000000;
+          const rubellaRateNum = (labRubella / popVal) * 1000000;
+          const discardRateNum = (nonMeaslesNonRubellaCount / popVal) * 100000;
+
+          document.getElementById(`resIncidenceMeasles_${num}`).innerText = `${measlesRateNum.toFixed(2)} / 1,000,000`;
+          document.getElementById(`resIncidenceRubella_${num}`).innerText = `${rubellaRateNum.toFixed(2)} / 1,000,000`;
+          document.getElementById(`resIncidenceDiscard_${num}`).innerText = `${discardRateNum.toFixed(2)} / 100,000`;
+
+          const ind1Elem = document.getElementById(`indMeaslesRate_${num}`);
+          if (measlesRateNum < 1.0) {
+            ind1Elem.innerHTML = `<span style="color:#15803d; font-weight:700;">🟢 ${measlesRateNum.toFixed(2)} / 1M</span><br><small style="color:#15803d;">Capai Sasaran (&lt;1/1M)</small>`;
+          } else {
+            ind1Elem.innerHTML = `<span style="color:#dc2626; font-weight:700;">🔴 ${measlesRateNum.toFixed(2)} / 1M</span><br><small style="color:#dc2626;">Tidak Capai (&ge;1/1M)</small>`;
+          }
+
+          const ind2Elem = document.getElementById(`indDiscardRate_${num}`);
+          if (discardRateNum >= 2.0) {
+            ind2Elem.innerHTML = `<span style="color:#15803d; font-weight:700;">🟢 ${discardRateNum.toFixed(2)} / 100k</span><br><small style="color:#15803d;">Capai Sasaran (&ge;2/100k)</small>`;
+          } else {
+            ind2Elem.innerHTML = `<span style="color:#dc2626; font-weight:700;">🔴 ${discardRateNum.toFixed(2)} / 100k</span><br><small style="color:#dc2626;">Tidak Capai (&lt;2/100k)</small>`;
+          }
+
+          const distList = Object.keys(districtDiscardMap);
+          const totalDistCount = distList.length > 0 ? distList.length : 1;
+          const distPopEst = popVal / totalDistCount;
+
+          let distAchievedCount = 0;
+          distList.forEach(d => {
+            const dDiscardCount = districtDiscardMap[d];
+            const dRate = (dDiscardCount / distPopEst) * 100000;
+            if (dRate >= 2.0) {
+              distAchievedCount++;
+            }
+          });
+
+          const distPct = ((distAchievedCount / totalDistCount) * 100).toFixed(1);
+          const ind3Elem = document.getElementById(`indDistrictAchieve_${num}`);
+
+          if (parseFloat(distPct) >= 80.0) {
+            ind3Elem.innerHTML = `<span style="color:#15803d; font-weight:700;">🟢 ${distPct}%</span><br><small style="color:#15803d;">(${distAchievedCount}/${totalDistCount} daerah - Capai &ge;80%)</small>`;
+          } else {
+            ind3Elem.innerHTML = `<span style="color:#dc2626; font-weight:700;">🔴 ${distPct}%</span><br><small style="color:#dc2626;">(${distAchievedCount}/${totalDistCount} daerah - Tidak Capai &ge;80%)</small>`;
+          }
+
+        } else {
+          document.getElementById(`resIncidenceMeasles_${num}`).innerText = 'Sila masukan Populasi';
+          document.getElementById(`resIncidenceRubella_${num}`).innerText = 'Sila masukan Populasi';
+          document.getElementById(`resIncidenceDiscard_${num}`).innerText = 'Sila masukan Populasi';
+          document.getElementById(`indMeaslesRate_${num}`).innerText = 'Sila masukan Populasi';
+          document.getElementById(`indDiscardRate_${num}`).innerText = 'Sila masukan Populasi';
+          document.getElementById(`indDistrictAchieve_${num}`).innerText = 'Sila masukan Populasi';
+        }
+
+        // INDICATOR 4 DISPLAY
+        const ind4Elem = document.getElementById(`indInvestigate48h_${num}`);
+        if (totalNotif > 0) {
+          const pctInvestigated = ((investigated48hCompleteCount / totalNotif) * 100).toFixed(1);
+          if (parseFloat(pctInvestigated) >= 80.0) {
+            ind4Elem.innerHTML = `<span style="color:#15803d; font-weight:700;">🟢 ${pctInvestigated}%</span><br><small style="color:#15803d;">(${investigated48hCompleteCount}/${totalNotif} kes - Capai &ge;80%)</small>`;
+          } else {
+            ind4Elem.innerHTML = `<span style="color:#dc2626; font-weight:700;">🔴 ${pctInvestigated}%</span><br><small style="color:#dc2626;">(${investigated48hCompleteCount}/${totalNotif} kes - Tidak Capai &ge;80%)</small>`;
+          }
+        } else {
+          ind4Elem.innerText = '-';
+        }
+
+        // INDICATOR 5 DISPLAY
+        const ind5Elem = document.getElementById(`indBloodSample28d_${num}`);
+        const denomInd5 = totalNotif - epid;
+
+        if (denomInd5 > 0) {
+          const pctInd5 = ((bloodSampleWithin28dCount / denomInd5) * 100).toFixed(1);
+          if (parseFloat(pctInd5) >= 80.0) {
+            ind5Elem.innerHTML = `<span style="color:#15803d; font-weight:700;">🟢 ${pctInd5}%</span><br><small style="color:#15803d;">(${bloodSampleWithin28dCount}/${denomInd5} kes - Capai &ge;80%)</small>`;
+          } else {
+            ind5Elem.innerHTML = `<span style="color:#dc2626; font-weight:700;">🔴 ${pctInd5}%</span><br><small style="color:#dc2626;">(${bloodSampleWithin28dCount}/${denomInd5} kes - Tidak Capai &ge;80%)</small>`;
+          }
+        } else {
+          ind5Elem.innerText = '-';
+        }
+
+        // INDICATOR 6 DISPLAY (DENOMINATOR = SAMPLES ACTUALLY RECEIVED)
+        const ind6Elem = document.getElementById(`indSampleLab5d_${num}`);
+        if (serologyReceivedCount > 0) {
+          const pctInd6 = ((sampleOnTime5dCount / serologyReceivedCount) * 100).toFixed(1);
+          if (parseFloat(pctInd6) >= 80.0) {
+            ind6Elem.innerHTML = `<span style="color:#15803d; font-weight:700;">🟢 ${pctInd6}%</span><br><small style="color:#15803d;">(${sampleOnTime5dCount}/${serologyReceivedCount} sampel - Capai &ge;80%)</small>`;
+          } else {
+            ind6Elem.innerHTML = `<span style="color:#dc2626; font-weight:700;">🔴 ${pctInd6}%</span><br><small style="color:#dc2626;">(${sampleOnTime5dCount}/${serologyReceivedCount} sampel - Tidak Capai &ge;80%)</small>`;
+          }
+        } else {
+          ind6Elem.innerText = '-';
+        }
+
+        // INDICATOR 7 DISPLAY (DENOMINATOR = SAMPLES ACTUALLY RECEIVED)
+        const ind7Elem = document.getElementById(`indResultReceived4d_${num}`);
+        if (serologyReceivedCount > 0) {
+          const pctInd7 = ((resultOnTime4dCount / serologyReceivedCount) * 100).toFixed(1);
+          if (parseFloat(pctInd7) >= 80.0) {
+            ind7Elem.innerHTML = `<span style="color:#15803d; font-weight:700;">🟢 ${pctInd7}%</span><br><small style="color:#15803d;">(${resultOnTime4dCount}/${serologyReceivedCount} sampel - Capai &ge;80%)</small>`;
+          } else {
+            ind7Elem.innerHTML = `<span style="color:#dc2626; font-weight:700;">🔴 ${pctInd7}%</span><br><small style="color:#dc2626;">(${resultOnTime4dCount}/${serologyReceivedCount} sampel - Tidak Capai &ge;80%)</small>`;
+          }
+        } else {
+          ind7Elem.innerText = '-';
+        }
+
+        // INDICATOR 8 DISPLAY
+        const ind8Elem = document.getElementById(`indOutbreakGenotype_${num}`);
+        if (outbreakCasesCount > 0) {
+          const pctInd8 = ((outbreakGenotypeCount / outbreakCasesCount) * 100).toFixed(1);
+          if (parseFloat(pctInd8) >= 80.0) {
+            ind8Elem.innerHTML = `<span style="color:#15803d; font-weight:700;">🟢 ${pctInd8}%</span><br><small style="color:#15803d;">(${outbreakGenotypeCount}/${outbreakCasesCount} kes wabak - Capai &ge;80%)</small>`;
+          } else {
+            ind8Elem.innerHTML = `<span style="color:#dc2626; font-weight:700;">🔴 ${pctInd8}%</span><br><small style="color:#dc2626;">(${outbreakGenotypeCount}/${outbreakCasesCount} kes wabak - Tidak Capai &ge;80%)</small>`;
+          }
+        } else {
+          ind8Elem.innerHTML = `<span style="color:#64748b; font-weight:600;">-</span><br><small style="color:#64748b;">(Tiada Kes Wabak)</small>`;
+        }
+
+        // INDICATOR 9 DISPLAY
+        const ind9Elem = document.getElementById(`indConfirmedSource_${num}`);
+        if (labMeasles > 0) {
+          const pctInd9 = ((labConfirmedKnownSourceCount / labMeasles) * 100).toFixed(1);
+          if (parseFloat(pctInd9) >= 80.0) {
+            ind9Elem.innerHTML = `<span style="color:#15803d; font-weight:700;">🟢 ${pctInd9}%</span><br><small style="color:#15803d;">(${labConfirmedKnownSourceCount}/${labMeasles} kes lab confirmed - Capai &ge;80%)</small>`;
+          } else {
+            ind9Elem.innerHTML = `<span style="color:#dc2626; font-weight:700;">🔴 ${pctInd9}%</span><br><small style="color:#dc2626;">(${labConfirmedKnownSourceCount}/${labMeasles} kes lab confirmed - Tidak Capai &ge;80%)</small>`;
+          }
+        } else {
+          ind9Elem.innerHTML = `<span style="color:#64748b; font-weight:600;">-</span><br><small style="color:#64748b;">(Tiada Kes Lab Confirmed)</small>`;
+        }
+
+        // RENDER MEASLES CHARTS
+        renderCasePieChart(num, labMeasles, clinical, epid, totalConfirmedMeasles);
+        renderGenderPieChart(num, maleCount, femaleCount);
+        renderVaxChart(num, vaxCounts);
+        renderAgeChart(num, ageCounts);
+        renderTrendChart(num, monthlyLab, monthlyClinical, monthlyEpid);
+        renderMeaslesMukimChart(num, measlesMukimMap);
+
+        // RENDER RUBELLA CHARTS
+        renderRubellaGenderPieChart(num, rubellaMaleCount, rubellaFemaleCount);
+        renderRubellaVaxChart(num, rubellaVaxCounts);
+        renderRubellaAgeChart(num, rubellaAgeCounts);
+        renderRubellaTrendChart(num, monthlyRubella);
+        renderRubellaMukimChart(num, rubellaMukimMap);
+      }
+    }
+
+    // --- CHART RENDER FUNCTIONS ---
+    function renderCasePieChart(num, labMeasles, clinical, epid, totalConfirmed) {
+      const chartId = `pieChart_${num}`;
+      const ctx = document.getElementById(chartId).getContext('2d');
+      const denominator = totalConfirmed > 0 ? totalConfirmed : 1;
+
+      chartStore[chartId] = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Lab Confirmed', 'Clinically Compatible', 'Epid-Linked'],
+          datasets: [{
+            data: [labMeasles, clinical, epid],
+            backgroundColor: ['#15803d', '#ca8a04', '#1d4ed8'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const label = context.label || '';
+                  const value = context.raw || 0;
+                  const percentage = totalConfirmed > 0 ? ((value / denominator) * 100).toFixed(1) : '0.0';
+                  return `${label}: ${value} kes (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderGenderPieChart(num, maleCount, femaleCount) {
+      const chartId = `genderPieChart_${num}`;
+      const ctx = document.getElementById(chartId).getContext('2d');
+      const totalGender = maleCount + femaleCount;
+      const denominator = totalGender > 0 ? totalGender : 1;
+
+      chartStore[chartId] = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Lelaki', 'Perempuan'],
+          datasets: [{
+            data: [maleCount, femaleCount],
+            backgroundColor: ['#0284c7', '#ec4899'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const label = context.label || '';
+                  const value = context.raw || 0;
+                  const percentage = totalGender > 0 ? ((value / denominator) * 100).toFixed(1) : '0.0';
+                  return `${label}: ${value} kes (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderVaxChart(num, vaxCounts) {
+      const chartId = `vaxChart_${num}`;
+      const ctx = document.getElementById(chartId).getContext('2d');
+
+      chartStore[chartId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Status Vaksinasi'],
+          datasets: [
+            { label: 'Ada', data: [vaxCounts["Ada"]], backgroundColor: '#15803d' },
+            { label: 'Tiada', data: [vaxCounts["Tiada"]], backgroundColor: '#dc2626' },
+            { label: 'Tidak layak', data: [vaxCounts["Tidak layak"]], backgroundColor: '#eab308' },
+            { label: 'Tidak diketahui', data: [vaxCounts["Tidak diketahui"]], backgroundColor: '#6b7280' }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+          },
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw} kes` } }
+          }
+        }
+      });
+    }
+
+    function renderAgeChart(num, ageCounts) {
+      const chartId = `ageChart_${num}`;
+      const ctx = document.getElementById(chartId).getContext('2d');
+
+      chartStore[chartId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: [
+            '< 1 year old',
+            '1-5 years old',
+            '6-10 years old',
+            '11-15 years old',
+            '16-20 years old',
+            '> 20 years old'
+          ],
+          datasets: [{
+            label: 'Bilangan Kes',
+            data: [
+              ageCounts["< 1 year old"],
+              ageCounts["1-5 years old"],
+              ageCounts["6-10 years old"],
+              ageCounts["11-15 years old"],
+              ageCounts["16-20 years old"],
+              ageCounts["> 20 years old"]
+            ],
+            backgroundColor: '#6366f1'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.raw} kes` } }
+          }
+        }
+      });
+    }
+
+    function renderTrendChart(num, monthlyLab, monthlyClinical, monthlyEpid) {
+      const chartId = `trendChart_${num}`;
+      const ctx = document.getElementById(chartId).getContext('2d');
+
+      chartStore[chartId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: MONTH_NAMES,
+          datasets: [
+            { label: 'Lab Confirmed', data: monthlyLab, backgroundColor: '#15803d' },
+            { label: 'Clinically Compatible', data: monthlyClinical, backgroundColor: '#ca8a04' },
+            { label: 'Epid-Linked', data: monthlyEpid, backgroundColor: '#1d4ed8' }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+          },
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw} kes` } }
+          }
+        }
+      });
+    }
+
+    function renderMeaslesMukimChart(num, mukimMap) {
+      const chartId = `measlesMukimChart_${num}`;
+      const ctx = document.getElementById(chartId).getContext('2d');
+
+      const sortedMukims = Object.keys(mukimMap).sort((a, b) => mukimMap[b].total - mukimMap[a].total);
+      const labels = sortedMukims.length > 0 ? sortedMukims : ['Tiada Data'];
+      
+      const labData = sortedMukims.length > 0 ? sortedMukims.map(m => mukimMap[m].lab) : [0];
+      const clinicalData = sortedMukims.length > 0 ? sortedMukims.map(m => mukimMap[m].clinical) : [0];
+      const epidData = sortedMukims.length > 0 ? sortedMukims.map(m => mukimMap[m].epid) : [0];
+
+      // Dynamically adjust height so ALL Mukim labels are 100% visible
+      const wrapper = document.getElementById(chartId).parentElement;
+      if (wrapper) {
+        wrapper.style.height = Math.max(260, labels.length * 26 + 60) + 'px';
+      }
+
+      chartStore[chartId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Lab Confirmed', data: labData, backgroundColor: '#15803d', maxBarThickness: 20 },
+            { label: 'Clinically Compatible', data: clinicalData, backgroundColor: '#ca8a04', maxBarThickness: 20 },
+            { label: 'Epid-Linked', data: epidData, backgroundColor: '#1d4ed8', maxBarThickness: 20 }
+          ]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              stacked: true,
+              beginAtZero: true,
+              ticks: { precision: 0 }
+            },
+            y: {
+              stacked: true,
+              ticks: {
+                autoSkip: false, // Ensures NO Mukim is skipped or hidden!
+                font: { size: 10 }
+              }
+            }
+          },
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw} kes` } }
+          }
+        }
+      });
+    }
+
+    // --- RUBELLA CHARTS RENDER FUNCTIONS ---
+    function renderRubellaGenderPieChart(num, maleCount, femaleCount) {
+      const chartId = `rubellaGenderChart_${num}`;
+      const ctx = document.getElementById(chartId).getContext('2d');
+      const totalRubellaGender = maleCount + femaleCount;
+      const denominator = totalRubellaGender > 0 ? totalRubellaGender : 1;
+
+      chartStore[chartId] = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Lelaki', 'Perempuan'],
+          datasets: [{
+            data: [maleCount, femaleCount],
+            backgroundColor: ['#0284c7', '#ec4899'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const label = context.label || '';
+                  const value = context.raw || 0;
+                  const percentage = totalRubellaGender > 0 ? ((value / denominator) * 100).toFixed(1) : '0.0';
+                  return `${label}: ${value} kes (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderRubellaVaxChart(num, vaxCounts) {
+      const chartId = `rubellaVaxChart_${num}`;
+      const ctx = document.getElementById(chartId).getContext('2d');
+
+      chartStore[chartId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Status Vaksinasi'],
+          datasets: [
+            { label: 'Ada', data: [vaxCounts["Ada"]], backgroundColor: '#15803d' },
+            { label: 'Tiada', data: [vaxCounts["Tiada"]], backgroundColor: '#dc2626' },
+            { label: 'Tidak layak', data: [vaxCounts["Tidak layak"]], backgroundColor: '#eab308' },
+            { label: 'Tidak diketahui', data: [vaxCounts["Tidak diketahui"]], backgroundColor: '#6b7280' }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+          },
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw} kes` } }
+          }
+        }
+      });
+    }
+
+    function renderRubellaAgeChart(num, ageCounts) {
+      const chartId = `rubellaAgeChart_${num}`;
+      const ctx = document.getElementById(chartId).getContext('2d');
+
+      chartStore[chartId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: [
+            '< 1 year old',
+            '1-5 years old',
+            '6-10 years old',
+            '11-15 years old',
+            '16-20 years old',
+            '> 20 years old'
+          ],
+          datasets: [{
+            label: 'Bilangan Kes Rubella',
+            data: [
+              ageCounts["< 1 year old"],
+              ageCounts["1-5 years old"],
+              ageCounts["6-10 years old"],
+              ageCounts["11-15 years old"],
+              ageCounts["16-20 years old"],
+              ageCounts["> 20 years old"]
+            ],
+            backgroundColor: '#8b5cf6'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.raw} kes` } }
+          }
+        }
+      });
+    }
+
+    function renderRubellaTrendChart(num, monthlyRubella) {
+      const chartId = `rubellaTrendChart_${num}`;
+      const ctx = document.getElementById(chartId).getContext('2d');
+
+      chartStore[chartId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: MONTH_NAMES,
+          datasets: [
+            {
+              label: 'Laboratory Confirmed Rubella',
+              data: monthlyRubella,
+              backgroundColor: '#e11d48'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+          },
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw} kes` } }
+          }
+        }
+      });
+    }
+
+    function renderRubellaMukimChart(num, mukimMap) {
+      const chartId = `rubellaMukimChart_${num}`;
+      const ctx = document.getElementById(chartId).getContext('2d');
+
+      const sortedMukims = Object.keys(mukimMap).sort((a, b) => mukimMap[b] - mukimMap[a]);
+      const labels = sortedMukims.length > 0 ? sortedMukims : ['Tiada Data'];
+      const data = sortedMukims.length > 0 ? sortedMukims.map(m => mukimMap[m]) : [0];
+
+      // Dynamically adjust height so ALL Mukim labels are 100% visible
+      const wrapper = document.getElementById(chartId).parentElement;
+      if (wrapper) {
+        wrapper.style.height = Math.max(260, labels.length * 26 + 60) + 'px';
+      }
+
+      chartStore[chartId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Bilangan Kes Rubella',
+            data: data,
+            backgroundColor: '#d97706',
+            maxBarThickness: 20
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { beginAtZero: true, ticks: { precision: 0 } },
+            y: {
+              ticks: {
+                autoSkip: false, // Ensures NO Mukim is skipped or hidden!
+                font: { size: 10 }
+              }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.raw} kes` } }
+          }
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
