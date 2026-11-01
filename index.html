@@ -50,6 +50,17 @@
       color: #000;
     }
 
+    .privacy-badge {
+      margin-top: 0.5rem;
+      background: #eef2ff;
+      color: #3730a3;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      border: 1px solid #c7d2fe;
+      display: inline-block;
+    }
+
     /* Upload Box Styling */
     .upload-box {
       background: #f8fafc;
@@ -101,7 +112,7 @@
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 1.2rem;
+      gap: 1rem;
     }
 
     .me-filter-title {
@@ -116,7 +127,12 @@
       align-items: center;
       gap: 0.5rem;
       flex: 1;
-      min-width: 220px;
+      min-width: 200px;
+    }
+
+    .me-select-group.year-group {
+      flex: 0 1 180px;
+      min-width: 140px;
     }
 
     .me-select-group label {
@@ -349,7 +365,7 @@
       border-bottom: 2px solid #94a3b8;
     }
 
-    /* INTERSECTION CELLS (TOP-LEFT CORNER STICKY HIGH Z-INDEX) */
+    /* INTERSECTION CELLS (TOP-LEFT CORNER) */
     table.summary-table thead tr.sticky-row-0 th:first-child {
       z-index: 30;
       background: #f1f5f9;
@@ -406,7 +422,10 @@
         Upload file from Sistem Maklumat Siasatan Measles (SM2) – Ekspot WHO Excel/CSV
       </div>
       <div class="small-text">
-        Pilih negeri, daerah, jumlah penduduk, status kes, dan Minggu Epidemiologi (ME)
+        Pilih tahun, negeri, daerah, jumlah penduduk, status kes, dan Minggu Epidemiologi (ME)
+      </div>
+      <div class="privacy-badge">
+        🔒 <b>Privasi Data Terjamin:</b> Semua analisa dilakukan di dalam pelayar komputer anda secara lokal. Tiada data pesakit dimuat naik ke internet atau mana-mana pelayan (server).
       </div>
     </div>
 
@@ -424,16 +443,28 @@
     <!-- MINGGU EPIDEMIOLOGI (ME) RANGE FILTER BAR (BASED ON NOTIFIED DATE) -->
     <div class="me-filter-bar">
       <div class="me-filter-title">🗓️ Tapis Minggu Epidemiologi Notifikasi (ME):</div>
+      
+      <!-- EPIDEMIOLOGICAL YEAR SELECTOR -->
+      <div class="me-select-group year-group">
+        <label for="epiYearSelect">Tahun:</label>
+        <select id="epiYearSelect">
+          <option value="2025" selected>Tahun 2025 (53 ME)</option>
+          <option value="2026">Tahun 2026 (52 ME)</option>
+          <option value="2027">Tahun 2027 (52 ME)</option>
+          <option value="2024">Tahun 2024 (52 ME)</option>
+        </select>
+      </div>
+
       <div class="me-select-group">
         <label for="meStartSelect">Dari ME:</label>
         <select id="meStartSelect">
-          <option value="1">Semua / ME 1</option>
+          <option value="1">ME 1</option>
         </select>
       </div>
       <div class="me-select-group">
         <label for="meEndSelect">Hingga ME:</label>
         <select id="meEndSelect">
-          <option value="52">Semua / ME 52</option>
+          <option value="53">ME 53</option>
         </select>
       </div>
     </div>
@@ -476,6 +507,19 @@
       "Jul", "Ogo", "Sep", "Okt", "Nov", "Dis"
     ];
 
+    // Initialize dropdowns on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      populateMEDropdowns();
+      renderSelectionInputs();
+    });
+
+    document.getElementById('epiYearSelect').addEventListener('change', () => {
+      populateMEDropdowns();
+      if (rawRows.length > 0) {
+        updateFilteredRecords();
+      }
+    });
+
     document.getElementById('fileInput').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -490,12 +534,53 @@
 
         document.getElementById('statusMessage').innerText = `🟢 Berjaya! ${rawRows.length.toLocaleString()} rekod dibaca.`;
         
+        detectAndPopulateYears();
         populateMEDropdowns();
         renderSelectionInputs();
         updateFilteredRecords();
       };
       reader.readAsArrayBuffer(file);
     });
+
+    function detectAndPopulateYears() {
+      const yearSel = document.getElementById('epiYearSelect');
+      const yearsSet = new Set([2024, 2025, 2026, 2027]);
+      const yearCounts = {};
+
+      rawRows.forEach(row => {
+        const d = parseDateVal(row['Notified'] || row['Tarikh_Notifikasi'] || row['Date_Of_Notification'] || row['NOTIFIED']);
+        const epiInfo = getEpiWeek(d);
+        if (epiInfo && epiInfo.year) {
+          yearsSet.add(epiInfo.year);
+          yearCounts[epiInfo.year] = (yearCounts[epiInfo.year] || 0) + 1;
+        }
+      });
+
+      const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
+
+      let dominantYear = 2025;
+      let maxCount = 0;
+      for (let yr in yearCounts) {
+        if (yearCounts[yr] > maxCount) {
+          maxCount = yearCounts[yr];
+          dominantYear = parseInt(yr, 10);
+        }
+      }
+
+      const currentSelected = parseInt(yearSel.value, 10);
+      const targetYear = (currentSelected && yearsSet.has(currentSelected)) ? currentSelected : dominantYear;
+
+      yearSel.innerHTML = '';
+      sortedYears.forEach(yr => {
+        const totalWk = getWeeksInYear(yr);
+        const opt = document.createElement('option');
+        opt.value = yr;
+        opt.textContent = `Tahun ${yr} (${totalWk} ME)`;
+        yearSel.appendChild(opt);
+      });
+
+      yearSel.value = String(targetYear);
+    }
 
     function renderSelectionInputs() {
       const container = document.getElementById('selectionsContainer');
@@ -608,14 +693,15 @@
 
       if (parts && parts.length === 3) {
         if (parts[0].length === 4) {
-          const y = parseInt(parts[0], 10);
+          let y = parseInt(parts[0], 10);
           const m = parseInt(parts[1], 10) - 1;
           const d = parseInt(parts[2], 10);
           return new Date(y, m, d);
         } else {
           const d = parseInt(parts[0], 10);
           const m = parseInt(parts[1], 10) - 1;
-          const y = parseInt(parts[2], 10);
+          let y = parseInt(parts[2], 10);
+          if (y < 100) y += 2000;
           return new Date(y, m, d);
         }
       }
@@ -673,30 +759,23 @@
     }
 
     function populateMEDropdowns() {
+      const yearSel = document.getElementById('epiYearSelect');
       const meStartSel = document.getElementById('meStartSelect');
       const meEndSel = document.getElementById('meEndSelect');
+
+      const selectedYear = parseInt(yearSel.value, 10) || 2025;
+      const totalWeeks = getWeeksInYear(selectedYear);
+
+      const jan4 = new Date(selectedYear, 0, 4);
+      const offset = (jan4.getDay() + 7) % 7;
+      const me1Start = new Date(selectedYear, 0, 4 - offset);
 
       meStartSel.innerHTML = '';
       meEndSel.innerHTML = '';
 
-      let sampleYear = 2026;
-      for (let r of rawRows) {
-        const d = parseDateVal(r['Notified'] || r['Tarikh_Notifikasi'] || r['Date_Of_Notification'] || r['NOTIFIED']);
-        if (d && !isNaN(d.getTime())) {
-          sampleYear = d.getFullYear();
-          break;
-        }
-      }
-
-      const totalWeeks = getWeeksInYear(sampleYear);
-
-      const jan4 = new Date(sampleYear, 0, 4);
-      const offset = (jan4.getDay() + 7) % 7;
-      const me1Start = new Date(sampleYear, 0, 4 - offset);
-
       for (let week = 1; week <= totalWeeks; week++) {
-        const wStart = new Date(me1Start.getTime() + (week - 1) * 7 * 86400 * 1000);
-        const wEnd = new Date(wStart.getTime() + 6 * 86400 * 1000);
+        const wStart = new Date(me1Start.getFullYear(), me1Start.getMonth(), me1Start.getDate() + (week - 1) * 7);
+        const wEnd = new Date(wStart.getFullYear(), wStart.getMonth(), wStart.getDate() + 6);
 
         const optText = `ME ${week} (${formatDateStr(wStart)} - ${formatDateStr(wEnd)})`;
 
@@ -773,8 +852,9 @@
 
       destroyAllCharts();
 
+      const selectedYear = parseInt(document.getElementById('epiYearSelect').value, 10);
       const startME = parseInt(document.getElementById('meStartSelect').value, 10) || 1;
-      const endME = parseInt(document.getElementById('meEndSelect').value, 10) || 52;
+      const endME = parseInt(document.getElementById('meEndSelect').value, 10) || 53;
 
       let headerHTML = `<thead>`;
       
@@ -805,7 +885,7 @@
       headerHTML += `</thead>`;
 
       const summaryBodyRows = [
-        { isHeader: true, title: 'Klasifikasi Kes' },
+        { isHeader: true, title: 'Klasifikasi Kes (Case_Classification)' },
         { id: 'resLabMeasles', label: 'Laboratory Confirmed Measles' },
         { id: 'resClinical', label: 'Clinically Compatible With Measles' },
         { id: 'resEpid', label: 'Epid-Linked Measles' },
@@ -842,8 +922,8 @@
         { id: 'indBloodSample28d', label: '<b>5. Peratus Kes Suspek dengan Pengambilan Sampel Darah &le; 28 Hari Selepas Onset Ruam</b><br><small><b>Sasaran:</b> &ge; 80% daripada jumlah kes suspek (kecuali Epid-Linked Measles)</small>' },
         { id: 'indSampleLab5d', label: '<b>6. Peratus Sampel Dihantar ke Makmal dalam Masa &le; 5 Hari</b><br><small><b>Sasaran:</b> &ge; 80% daripada sampel yang diterima makmal (Beza Diterima - Dikutip &le; 5 hari)</small>' },
         { id: 'indResultReceived4d', label: '<b>7. Peratus Keputusan Sampel Diterima dalam Masa &le; 4 Hari</b><br><small><b>Sasaran:</b> &ge; 80% daripada sampel yang diterima makmal (Beza Dilapor - Diterima &le; 4 hari)</small>' },
-        { id: 'indOutbreakGenotype', label: '<b>8. Peratus Wabak Measles dengan Genotype Data</b><br><small><b>Sasaran:</b> &ge; 80% daripada jumlah kes wabak</small>' },
-        { id: 'indConfirmedSource', label: '<b>9. Peratus Kes Disahkan Measles dengan Punca Jangkitan</b><br><small><b>Sasaran:</b> &ge; 80% daripada jumlah kes lab confirmed measles</small>' }
+        { id: 'indOutbreakGenotype', label: '<b>8. Peratus Wabak Measles dengan Genotype Data</b><br><small><b>Sasaran:</b> &ge; 80% daripada jumlah kes wabak (Outbreak_Assoc = Y)</small>' },
+        { id: 'indConfirmedSource', label: '<b>9. Peratus Kes Disahkan Measles dengan Punca Jangkitan</b><br><small><b>Sasaran:</b> &ge; 80% daripada jumlah kes lab confirmed measles (_Type tidak kosong)</small>' }
       ];
 
       let bodyHTML = `<tbody>`;
@@ -889,9 +969,11 @@
 
           const notifDate = parseDateVal(row['Notified'] || row['Tarikh_Notifikasi'] || row['Date_Of_Notification'] || row['NOTIFIED']);
           const epiInfo = getEpiWeek(notifDate);
-          let matchME = true;
+          let matchME = false;
           if (epiInfo) {
-            matchME = epiInfo.week >= startME && epiInfo.week <= endME;
+            const matchYear = epiInfo.year === selectedYear;
+            const matchWeek = epiInfo.week >= startME && epiInfo.week <= endME;
+            matchME = matchYear && matchWeek;
           }
 
           return matchState && matchDistrict && matchME;
@@ -904,9 +986,9 @@
         let investigated48hCompleteCount = 0;
         let bloodSampleWithin28dCount = 0;
         
-        let serologyReceivedCount = 0; // Denominator for Ind 6 & 7 (Cases where sample was actually received by lab)
-        let sampleOnTime5dCount = 0;   // Numerator for Ind 6
-        let resultOnTime4dCount = 0;   // Numerator for Ind 7
+        let serologyReceivedCount = 0;
+        let sampleOnTime5dCount = 0;
+        let resultOnTime4dCount = 0;
 
         let outbreakCasesCount = 0;
         let outbreakGenotypeCount = 0;
@@ -1078,7 +1160,7 @@
           const hasSerologyReceived = hasValue(r, ['1_serology_received', '1_Serology_Received', '1_SEROLOGY_RECEIVED', 'Serology_Received', '1st_Serology_Received']);
           
           if (hasSerologyReceived) {
-            serologyReceivedCount++; // Only cases successfully sent to/received by the lab are included in the denominator
+            serologyReceivedCount++;
 
             const serologyRecVal = r['1_serology_received'] || r['1_Serology_Received'] || r['1_SEROLOGY_RECEIVED'] || r['Serology_Received'] || r['1st_Serology_Received'];
             const reportVal = r['date_reported'] || r['Date_Reported'] || r['DATE_REPORTED'] || r['Tarikh_Laporan'];
@@ -1086,7 +1168,6 @@
             const dSerologyReceived = parseDateVal(serologyRecVal);
             const dReported = parseDateVal(reportVal);
 
-            // Ind 6: Received <= 5 days after Collection
             if (dSerology && dSerologyReceived) {
               const dateColOnly = new Date(dSerology.getFullYear(), dSerology.getMonth(), dSerology.getDate());
               const dateRecOnly = new Date(dSerologyReceived.getFullYear(), dSerologyReceived.getMonth(), dSerologyReceived.getDate());
@@ -1097,7 +1178,6 @@
               }
             }
 
-            // Ind 7: Reported <= 4 days after Received
             if (dSerologyReceived && dReported) {
               const dateRecOnly = new Date(dSerologyReceived.getFullYear(), dSerologyReceived.getMonth(), dSerologyReceived.getDate());
               const dateRepOnly = new Date(dReported.getFullYear(), dReported.getMonth(), dReported.getDate());
@@ -1282,7 +1362,7 @@
           ind5Elem.innerText = '-';
         }
 
-        // INDICATOR 6 DISPLAY (DENOMINATOR = SAMPLES ACTUALLY RECEIVED)
+        // INDICATOR 6 DISPLAY
         const ind6Elem = document.getElementById(`indSampleLab5d_${num}`);
         if (serologyReceivedCount > 0) {
           const pctInd6 = ((sampleOnTime5dCount / serologyReceivedCount) * 100).toFixed(1);
@@ -1295,7 +1375,7 @@
           ind6Elem.innerText = '-';
         }
 
-        // INDICATOR 7 DISPLAY (DENOMINATOR = SAMPLES ACTUALLY RECEIVED)
+        // INDICATOR 7 DISPLAY
         const ind7Elem = document.getElementById(`indResultReceived4d_${num}`);
         if (serologyReceivedCount > 0) {
           const pctInd7 = ((resultOnTime4dCount / serologyReceivedCount) * 100).toFixed(1);
@@ -1535,7 +1615,6 @@
       const clinicalData = sortedMukims.length > 0 ? sortedMukims.map(m => mukimMap[m].clinical) : [0];
       const epidData = sortedMukims.length > 0 ? sortedMukims.map(m => mukimMap[m].epid) : [0];
 
-      // Dynamically adjust height so ALL Mukim labels are 100% visible
       const wrapper = document.getElementById(chartId).parentElement;
       if (wrapper) {
         wrapper.style.height = Math.max(260, labels.length * 26 + 60) + 'px';
@@ -1564,7 +1643,7 @@
             y: {
               stacked: true,
               ticks: {
-                autoSkip: false, // Ensures NO Mukim is skipped or hidden!
+                autoSkip: false,
                 font: { size: 10 }
               }
             }
@@ -1724,7 +1803,6 @@
       const labels = sortedMukims.length > 0 ? sortedMukims : ['Tiada Data'];
       const data = sortedMukims.length > 0 ? sortedMukims.map(m => mukimMap[m]) : [0];
 
-      // Dynamically adjust height so ALL Mukim labels are 100% visible
       const wrapper = document.getElementById(chartId).parentElement;
       if (wrapper) {
         wrapper.style.height = Math.max(260, labels.length * 26 + 60) + 'px';
@@ -1749,7 +1827,7 @@
             x: { beginAtZero: true, ticks: { precision: 0 } },
             y: {
               ticks: {
-                autoSkip: false, // Ensures NO Mukim is skipped or hidden!
+                autoSkip: false,
                 font: { size: 10 }
               }
             }
