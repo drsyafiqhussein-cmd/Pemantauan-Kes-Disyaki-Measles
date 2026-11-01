@@ -142,7 +142,7 @@
       white-space: nowrap;
     }
 
-    /* SELECTION HEADER BAR WITH TAMBAH & HAPUS BUTTONS */
+    /* SELECTIONS HEADER BAR WITH TAMBAH & HAPUS BUTTONS */
     .selections-header {
       display: flex;
       justify-content: space-between;
@@ -262,9 +262,10 @@
     .action-bar {
       display: flex;
       align-items: center;
-      gap: 1.5rem;
+      gap: 1rem;
       padding-top: 0.5rem;
       border-top: 1px solid #f1f5f9;
+      flex-wrap: wrap;
     }
 
     .btn-apply {
@@ -281,6 +282,26 @@
 
     .btn-apply:hover {
       background: #252f75;
+    }
+
+    /* DOWNLOAD PDF BUTTON */
+    .btn-pdf {
+      padding: 0.45rem 1.3rem;
+      border-radius: 999px;
+      border: 1px solid #0284c7;
+      background: #0284c7;
+      color: #ffffff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: background 0.2s;
+    }
+
+    .btn-pdf:hover {
+      background: #0369a1;
     }
 
     .record-info {
@@ -407,6 +428,77 @@
       width: 100%;
       height: 250px;
     }
+
+    /* ========================================================
+       PRINT & PDF EXPORT OPTIMIZATIONS (@media print)
+       ======================================================== */
+    @media print {
+      @page {
+        size: landscape;
+        margin: 10mm;
+      }
+
+      body {
+        background: #ffffff !important;
+        padding: 0 !important;
+        color: #000000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      /* Hide upload boxes, interactive control panels, and buttons */
+      .upload-box,
+      .controls-card,
+      .action-bar,
+      .privacy-badge,
+      .btn-group-column {
+        display: none !important;
+      }
+
+      .top-bar {
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1 !important;
+        margin-bottom: 1rem !important;
+        padding: 0.8rem 1rem !important;
+      }
+
+      /* Unfreeze scroll containers so full table prints across pages */
+      .dashboard-scroll-wrapper {
+        box-shadow: none !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        max-height: none !important;
+      }
+
+      table.summary-table {
+        width: 100% !important;
+        font-size: 0.78rem !important;
+      }
+
+      /* Un-stick rows and columns on paper to prevent overlap */
+      table.summary-table th, 
+      table.summary-table td,
+      table.summary-table th:first-child,
+      table.summary-table td:first-child,
+      table.summary-table thead tr th {
+        position: static !important;
+        box-shadow: none !important;
+        padding: 0.35rem 0.5rem !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      tr {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      .chart-cell-wrapper {
+        height: 220px !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+    }
   </style>
 </head>
 <body>
@@ -483,9 +575,10 @@
       <!-- Dynamic Selection Cards Rendered via JS -->
     </div>
 
-    <!-- ACTION BUTTON -->
+    <!-- ACTION BUTTONS -->
     <div class="action-bar">
       <button id="applyBtn" class="btn-apply">Apply Filter</button>
+      <button id="pdfBtn" class="btn-pdf">📄 Cetak / Simpan PDF</button>
       <span id="recordInfo" class="record-info"></span>
     </div>
   </div>
@@ -540,6 +633,15 @@
         updateFilteredRecords();
       };
       reader.readAsArrayBuffer(file);
+    });
+
+    // PRINT / DOWNLOAD PDF HANDLER
+    document.getElementById('pdfBtn').addEventListener('click', () => {
+      if (!rawRows.length) {
+        alert('Sila muat naik fail SM2 dan klik "Apply Filter" terlebih dahulu sebelum menjana PDF.');
+        return;
+      }
+      window.print();
     });
 
     function detectAndPopulateYears() {
