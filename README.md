@@ -7,20 +7,20 @@ Aplikasi web berasaskan pelayar untuk menganalisis dan memantau siasatan kes dis
 
 ---
 
-## 👨‍⚕️ Penghargaan (Credits)
+## Penghargaan (Credits)
 * **Dibangunkan oleh:** Dr. Abdul Ahmad Syafiq bin Hussein
 * **Penghargaan Khas:** Dr. Mohd Syis Zulkipli
 
 ---
 
-## 🔒 Jaminan Privasi Data (PDPA / KKM)
+## Privasi Data
 * **100% Pemprosesan Tempatan:** Semua bacaan data fail Excel/CSV dan pengiraan indikator dijalankan secara lokal di dalam pelayar web pengguna (menggunakan SheetJS & Chart.js).
 * **Tiada Pelayan (Zero Server Storage):** Tiada maklumat pesakit atau data kes dimuat naik ke internet atau mana-mana pelayan luaran.
 * Menutup tab pelayar akan memadamkan semua data daripada memori komputer serta-merta.
 
 ---
 
-## ⚙️ Ciri-ciri Utama
+## Ciri-ciri Utama
 1. **Penapisan Minggu Epidemiologi (ME):** Setakat ini untuk tahun 2024, 2025, 2026, dan 2027.
 2. **Perbandingan antara Negeri/Daerah:**
 3. **Pengiraan 9 Indikator Program Eliminasi Measles:**
@@ -29,7 +29,7 @@ Aplikasi web berasaskan pelayar untuk menganalisis dan memantau siasatan kes dis
 
 ---
 
-## 📖 Cara Penggunaan
+## Cara Penggunaan
 1. Muat turun fail ekspot siasatan kes dari **SM2 (WHO Export .xlsx / .csv)**.
 2. Buka pautan dashboard pada pelayar web (Google Chrome / Microsoft Edge disyorkan).
 3. Muat naik fail pada kotak **Upload File SM2**.
