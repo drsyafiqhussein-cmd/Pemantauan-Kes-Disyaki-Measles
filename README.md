@@ -22,10 +22,10 @@ https://drsyafiqhussein-cmd.github.io/Pemantauan-Kes-Disyaki-Measles/
 
 ## Ciri-ciri Utama
 1. **Penapisan Minggu Epidemiologi (ME):** Setakat ini untuk tahun 2024, 2025, 2026, dan 2027.
-2. **Perbandingan antara Negeri/Daerah:**
-3. **Pengiraan 9 Indikator Program Eliminasi Measles:**
-4. **Visualisasi Interaktif:**
-5. **Cetak & Eksport PDF:**
+2. **Perbandingan antara Negeri/Daerah**
+3. **Pengiraan 9 Indikator Program Eliminasi Measles**
+4. **Visualisasi Interaktif**
+5. **Cetak & Eksport PDF**
 
 ---
 
