@@ -258,50 +258,61 @@
       border-color: #3b82f6;
     }
 
-    /* ACTION BAR */
+    /* ACTION BAR WITH PROMINENT BUTTONS */
     .action-bar {
       display: flex;
       align-items: center;
       gap: 1rem;
-      padding-top: 0.5rem;
-      border-top: 1px solid #f1f5f9;
+      padding-top: 0.85rem;
+      border-top: 1px solid #e2e8f0;
       flex-wrap: wrap;
     }
 
-    .btn-apply {
-      padding: 0.45rem 1.5rem;
+    /* DOWNLOAD / PRINT PDF BUTTON (LEFT SIDE, HIGH VISIBILITY RED) */
+    .btn-pdf {
+      padding: 0.55rem 1.4rem;
       border-radius: 999px;
-      border: 1px solid #33409c;
+      border: 1px solid #b91c1c;
+      background: #dc2626;
+      color: #ffffff;
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 2px 6px rgba(220, 38, 38, 0.28);
+      transition: all 0.2s ease-in-out;
+    }
+
+    .btn-pdf:hover {
+      background: #b91c1c;
+      box-shadow: 0 4px 10px rgba(185, 28, 28, 0.35);
+      transform: translateY(-1px);
+    }
+
+    /* APPLY FILTER BUTTON */
+    .btn-apply {
+      padding: 0.55rem 1.5rem;
+      border-radius: 999px;
+      border: 1px solid #252f75;
       background: #33409c;
       color: #ffffff;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .btn-apply:hover {
-      background: #252f75;
-    }
-
-    /* DOWNLOAD PDF BUTTON */
-    .btn-pdf {
-      padding: 0.45rem 1.3rem;
-      border-radius: 999px;
-      border: 1px solid #0284c7;
-      background: #0284c7;
-      color: #ffffff;
-      font-size: 0.85rem;
-      font-weight: 600;
+      font-size: 0.88rem;
+      font-weight: 700;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
-      transition: background 0.2s;
+      box-shadow: 0 2px 6px rgba(51, 64, 156, 0.25);
+      transition: all 0.2s ease-in-out;
     }
 
-    .btn-pdf:hover {
-      background: #0369a1;
+    .btn-apply:hover {
+      background: #252f75;
+      box-shadow: 0 4px 10px rgba(37, 47, 117, 0.35);
+      transform: translateY(-1px);
     }
 
     .record-info {
@@ -446,7 +457,7 @@
         print-color-adjust: exact !important;
       }
 
-      /* Hide upload boxes, interactive control panels, and buttons */
+      /* Hide upload box, filter configuration controls, and action buttons */
       .upload-box,
       .controls-card,
       .action-bar,
@@ -575,10 +586,10 @@
       <!-- Dynamic Selection Cards Rendered via JS -->
     </div>
 
-    <!-- ACTION BUTTONS -->
+    <!-- ACTION BUTTONS (PDF ON THE LEFT OF APPLY FILTER) -->
     <div class="action-bar">
-      <button id="applyBtn" class="btn-apply">Apply Filter</button>
       <button id="pdfBtn" class="btn-pdf">📄 Cetak / Simpan PDF</button>
+      <button id="applyBtn" class="btn-apply">🔍 Apply Filter</button>
       <span id="recordInfo" class="record-info"></span>
     </div>
   </div>
@@ -638,7 +649,7 @@
     // PRINT / DOWNLOAD PDF HANDLER
     document.getElementById('pdfBtn').addEventListener('click', () => {
       if (!rawRows.length) {
-        alert('Sila muat naik fail SM2 dan klik "Apply Filter" terlebih dahulu sebelum menjana PDF.');
+        alert('Sila muat naik fail SM2 dan klik "Apply Filter" terlebih dahulu sebelum mencetak / menyimpan PDF.');
         return;
       }
       window.print();
