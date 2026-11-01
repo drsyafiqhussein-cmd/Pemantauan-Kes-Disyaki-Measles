@@ -3,7 +3,7 @@
 Aplikasi web berasaskan pelayar untuk menganalisis dan memantau siasatan kes disyaki Measles dan Rubella di Malaysia berdasarkan data ekspot WHO dari **Sistem Maklumat Siasatan Measles (SM2)**.
 
 🔗 **Pautan Aplikasi Langsung (Live Website):**  
-[Buka Dashboard]((https://drsyafiqhussein-cmd.github.io/Pemantauan-Kes-Disyaki-Measles/)
+https://drsyafiqhussein-cmd.github.io/Pemantauan-Kes-Disyaki-Measles/
 
 ---
 
